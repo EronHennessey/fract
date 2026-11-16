@@ -21,8 +21,8 @@ fn prompt_user(prompt: String) -> String {
     return answer;
 } 
 
-const OPERATIONS: [&str; 6] = [
-    "+", "-", "*", "/", "q", "s"
+const OPERATIONS: [&str; 10] = [
+    "+", "-", "*", "/", "q", "s", "h", "?", "o", ""
 ];
 
 /// Format a Fraction as a string with a whole number + fractional part.
@@ -46,6 +46,36 @@ fn format_fraction(f: &Fraction) -> String {
     v
 }
 
+fn show_operations() {
+    println!("\nOperations are:");
+    println!(" +      - Add the last two numbers on the stack.");
+    println!(" -      - Subtract the last number on the stack from the second-to-last one.");
+    println!(" *      - Multiply the last two numbers on the stack.");
+    println!(" /      - Divide the second-to-last number on the stack by the last one.");
+    println!(" s      - Show the current stack.");
+    println!(" o      - Show all available operations.");
+    println!(" h, ?   - Show this help.");
+    println!(" q      - Quit the program.\n");
+    println!("Pressing Enter at an empty prompt will duplicate the last value on the stack.\n");
+}
+
+fn show_help() {
+    println!("\nfract(ulator) help");
+    println!("==================\n");
+    println!("This calculator uses reverse Polish notation (also known as RPN, or 'postfix' notation).\n");
+    println!("Type either a *number* or *operation* at the prompt:");
+    println!("* Numbers are saved on the *stack*.");
+    println!("* Operations are performed on the values in the stack.\n");
+    println!("Enter numbers first, then the operation to perform on them.");
+    println!("Example: Entering '2', then '5', then '/' yields '2/5'.\n");
+    println!("Numbers can be entered as decimals or fractions.");
+    println!("Examples: '1.05', '3/4', '1+2/5', '1 1/4'.");
+    println!("All numbers, whether decimal or fractional, are converted to reduced, regular fractions.");
+    show_operations();
+    println!("The result of any operation that yields a value will be printed as a reduced, regular fraction.");
+    println!("If the result is a fraction with a denominator > 16, an approximate result is given in 16ths.");
+    println!("Any values used are removed from the stack, and then the result is pushed back onto the stack.\n");
+}
 
 fn main() {
     let mut stack = Vec::new();
@@ -118,10 +148,29 @@ fn main() {
                         println!("[empty]\n");
                     }
                 },
+                "o" => {
+                    show_operations();
+
+                },
+                "h" | "?" => {
+                    show_help();
+
+                },
                 "q" => {
                     quit = true;
                     println!("Quitting...");
                     continue;
+                },
+                "" => {
+                    if stack.len() > 0 {
+                        let last_val = stack.pop().unwrap();
+                        let new_val = last_val.clone();
+                        stack.push(last_val);
+                        stack.push(new_val);
+                    }
+                    else {
+                        println!("The stack is empty! No value duplicated. Enter 'h' for help.");
+                    }
                 }
                 &_ => {
                     println!("What's this?!");
@@ -166,6 +215,7 @@ fn main() {
                     },
                     Err(_e) => {
                         println!("Error: '{}' is not a known operation or number!", i);
+                        println!("Enter 'o' for a list of operations. Enter 'h' for help.");
                     }
                 }
             }
