@@ -6,7 +6,13 @@
 use std::io::{self, Write};
 use std::vec::Vec;
 use std::str::FromStr;
-use fraction::{Fraction};
+use fraction::{Fraction, Decimal};
+
+const SEEHELP: &str = "Enter 'h' for help.";
+
+const OPERATIONS: [&str; 11] = [
+    "+", "-", "*", "/", "q", "s", "h", "?", "o", "d", ""
+];
 
 /// Prompt the user for input.
 fn prompt_user(prompt: String) -> String {
@@ -21,27 +27,35 @@ fn prompt_user(prompt: String) -> String {
     return answer;
 } 
 
-const OPERATIONS: [&str; 10] = [
-    "+", "-", "*", "/", "q", "s", "h", "?", "o", ""
-];
-
 /// Format a Fraction as a string with a whole number + fractional part.
 fn format_fraction(f: &Fraction) -> String {
     let mut v:String;
     if f.trunc() == Fraction::from(0) {
+        // Value has no whole number part.
         v = format!("{}", f.fract());
     } else if f.fract() == Fraction::from(0) {
+        // Value has no fractional part.
         v = format!("{}", f.trunc());
+        return v; // No need to go further here.
     } else {
+        // Value has both a whole and fractional part.
         v = format!("{} {}", f.trunc(), f.fract());
     }
     // if the denominator is > 16, then show an approximate value, as well.
     let approx_denom = 16u64;
-    if f.denom().unwrap() > &approx_denom {
+    let d = f.denom().unwrap();
+    let target_ds = [2, 4, 8, 16];
+    if !(target_ds.contains(d)) {
         let actual_denom = f.denom().unwrap().clone() as f64;
         let factor = actual_denom / (approx_denom as f64);
-        let approx_numer = (f.numer().unwrap().clone() as f64) / factor;
-        v = format!("{} (approx: {}/{})", v, approx_numer as u64, approx_denom);
+        let approx_frac = Fraction::from_str(format!("{}/{}", ((f.numer().unwrap().clone() as f64) / factor) as u64, approx_denom).as_str()).unwrap();
+        if approx_frac == Fraction::from(0) {
+            // approximated value is zero!
+            v = format!("{} (approx: 0)", v);
+        } else {
+            let approx_str = format_fraction(&approx_frac);
+            v = format!("{} (approx: {})", v, approx_str);
+        }
     }
     v
 }
@@ -52,6 +66,7 @@ fn show_operations() {
     println!(" -      - Subtract the last number on the stack from the second-to-last one.");
     println!(" *      - Multiply the last two numbers on the stack.");
     println!(" /      - Divide the second-to-last number on the stack by the last one.");
+    println!(" d      - Approximate the last number on the stack as a decimal value.");
     println!(" s      - Show the current stack.");
     println!(" o      - Show all available operations.");
     println!(" h, ?   - Show this help.");
@@ -134,9 +149,21 @@ fn main() {
                         println!("Not enough items for '/'!");
                     }
                 },
+                "d" => {
+                    // Show the last value on the stack as a decimal value.
+                    if stack.is_empty() {
+                        println!("No values on the stack! {SEEHELP}");
+                    } else {
+                        let fv = stack.last().unwrap().clone();
+                        // Convert fraction to decimal with automatic precision.
+                        let dv = Decimal::from_fraction(fv);
+                        println!("{}", dv);
+                    }
+                },
                 "s" => {
-                    println!("\nCurrent stack");
-                    println!("-------------");
+                    // Show the current stack.
+                    println!("\nStack");
+                    println!("-----");
                     let mut n = stack.len();
                     if n > 0 {
                         for v in stack.iter() {
@@ -153,23 +180,23 @@ fn main() {
 
                 },
                 "h" | "?" => {
+                    // Display the full help text.
                     show_help();
 
                 },
                 "q" => {
+                    // Quit the program.
                     quit = true;
                     println!("Quitting...");
                     continue;
                 },
                 "" => {
-                    if stack.len() > 0 {
-                        let last_val = stack.pop().unwrap();
-                        let new_val = last_val.clone();
-                        stack.push(last_val);
+                    // Duplicate the last value on the stack.
+                    if stack.is_empty() {
+                        println!("The stack is empty! No value duplicated. {SEEHELP}");
+                    } else {
+                        let new_val = stack.last().unwrap().clone();
                         stack.push(new_val);
-                    }
-                    else {
-                        println!("The stack is empty! No value duplicated. Enter 'h' for help.");
                     }
                 }
                 &_ => {
@@ -215,7 +242,7 @@ fn main() {
                     },
                     Err(_e) => {
                         println!("Error: '{}' is not a known operation or number!", i);
-                        println!("Enter 'o' for a list of operations. Enter 'h' for help.");
+                        println!("Enter 'o' for a list of operations. {SEEHELP}");
                     }
                 }
             }

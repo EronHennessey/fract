@@ -31,6 +31,7 @@ Operations are:
 | `-`       | Subtract the last number on the stack from the second-to-last one. |
 | `*`       | Multiply the last two numbers on the stack. |
 | `/`       | Divide the second-to-last number on the stack by the last one. |
+| `d`       | Approximate the last number on the stack as a decimal value. |
 | `s`       | Show the current stack. |
 | `o`       | Show all available operations. |
 | `h`, `?`  | Show this help. |
