@@ -60,6 +60,13 @@ fn format_fraction(f: &Fraction) -> String {
     v
 }
 
+fn show_banner() {
+    println!("fract(ulator)");
+    println!("=============\n");
+    println!("Enter numbers to add to the stack, or operations to apply to numbers on the stack.\n");
+    println!("Enter 'o' to list available operations; 's' to show the stack; 'h' for help.\n");
+}
+
 fn show_operations() {
     println!("\nOperations are:");
     println!(" +      - Add the last two numbers on the stack.");
@@ -95,6 +102,8 @@ fn show_help() {
 fn main() {
     let mut stack = Vec::new();
     let mut quit = false;
+
+    show_banner();
 
     while !quit {
         let input: String = prompt_user(String::from("")).to_lowercase();
