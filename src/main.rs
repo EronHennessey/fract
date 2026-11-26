@@ -14,17 +14,19 @@ const OPERATIONS: [&str; 11] = [
     "+", "-", "*", "/", "q", "s", "h", "?", "o", "d", ""
 ];
 
-/// Prompt the user for input.
+/// Prompt the user for input, and return the response (minus the return/newline character at the
+/// end of the response).
 fn prompt_user(prompt: String) -> String {
-    // Prompt user with a String, return the result as a String.
-    print!("{prompt}> ");
-    // Must flush output because there was no newline.
+    // Prompt the user with the provided string.
+    print!("{prompt} ");
+    // Flush the output stream to show the prompt, because there was no newline...
     io::stdout().flush().unwrap();
-    // Get the answer and return it...
-    let mut answer = String::new();
-    io::stdin().read_line(&mut answer).expect("Failed to read line");
-    answer = String::from(answer.trim_end());
-    return answer;
+    // Read the user's response...
+    let mut response = String::new();
+    io::stdin().read_line(&mut response).expect("Failed to read line");
+    // Remove the newline at the end of the response before returning it.
+    response = String::from(response.trim_end());
+    return response;
 } 
 
 /// Format a Fraction as a string with a whole number + fractional part.
@@ -41,10 +43,10 @@ fn format_fraction(f: &Fraction) -> String {
         // Value has both a whole and fractional part.
         v = format!("{} {}", f.trunc(), f.fract());
     }
-    // if the denominator is > 16, then show an approximate value, as well.
+    // if the denominator is not a power of 2 <= 32, then show an approximate value, as well.
     let approx_denom = 16u64;
     let d = f.denom().unwrap();
-    let target_ds = [2, 4, 8, 16];
+    let target_ds = [2, 4, 8, 16, 32];
     if !(target_ds.contains(d)) {
         let actual_denom = f.denom().unwrap().clone() as f64;
         let factor = actual_denom / (approx_denom as f64);
@@ -91,11 +93,12 @@ fn show_help() {
     println!("Enter numbers first, then the operation to perform on them.");
     println!("Example: Entering '2', then '5', then '/' yields '2/5'.\n");
     println!("Numbers can be entered as decimals or fractions.");
-    println!("Examples: '1.05', '3/4', '1+2/5', '1 1/4'.");
+    println!("Examples: '1.05', '3/4', '1+2/5', '1 1/4'.\n");
     println!("All numbers, whether decimal or fractional, are converted to reduced, regular fractions.");
     show_operations();
-    println!("The result of any operation that yields a value will be printed as a reduced, regular fraction.");
-    println!("If the result is a fraction with a denominator > 16, an approximate result is given in 16ths.");
+    println!("The result of any operation that yields a value will be printed as a reduced, regular fraction.\n");
+    println!("If the result is a fraction with a denominator other than a power of 2 (less than or equal to 32),");
+    println!("an approximate result is printed in x/2, x/4, x/8, x/16, or x/32.\n");
     println!("Any values used are removed from the stack, and then the result is pushed back onto the stack.\n");
 }
 
@@ -106,7 +109,7 @@ fn main() {
     show_banner();
 
     while !quit {
-        let input: String = prompt_user(String::from("")).to_lowercase();
+        let input: String = prompt_user(String::from(">")).to_lowercase();
         let i = input.as_str();
         if OPERATIONS.contains(&i) {
             match i {
